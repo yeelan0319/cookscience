@@ -57,8 +57,9 @@ searchController.search = function(req, res, next) {
 			results.breadcrumbs = breadcrumbs;
 			results.categories = categories;
 			results.expandSearch = false;
-
+			console.log(results);
 			plugins.fireHook('filter:search.build', {data: data, results: results}, function(err, data) {
+				console.log(data);
 				if (err) {
 					return next(err);
 				}
