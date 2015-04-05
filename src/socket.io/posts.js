@@ -49,6 +49,8 @@ SocketPosts.reply = function(socket, data, callback) {
 
 		socket.emit('event:new_post', result);
 
+		user.updateOnlineUsers(socket.uid);
+
 		SocketPosts.notifyOnlineUsers(socket.uid, result);
 
 		if (data.lock) {
@@ -232,7 +234,7 @@ SocketPosts.sendNotificationToPostOwner = function(pid, fromuid, notification) {
 		async.parallel({
 			username: async.apply(user.getUserField, fromuid, 'username'),
 			topicTitle: async.apply(topics.getTopicField, postData.tid, 'title'),
-			postObj: async.apply(postTools.parsePost, postData, postData.uid)
+			postObj: async.apply(postTools.parsePost, postData)
 		}, function(err, results) {
 			if (err) {
 				return;
@@ -479,7 +481,7 @@ SocketPosts.flag = function(socket, pid, callback) {
 		function(topic, next) {
 			post.topic = topic;
 			message = '[[notifications:user_flagged_post_in, ' + userName + ', ' + topic.title + ']]';
-			postTools.parsePost(post, socket.uid, next);
+			postTools.parsePost(post, next);
 		},
 		function(post, next) {
 			async.parallel({
@@ -509,27 +511,23 @@ SocketPosts.flag = function(socket, pid, callback) {
 };
 
 SocketPosts.loadMoreFavourites = function(socket, data, callback) {
-	if(!data || !data.after) {
-		return callback(new Error('[[error:invalid-data]]'));
-	}
-
-	var start = parseInt(data.after, 10),
-		end = start + 9;
-
-	posts.getPostsFromSet('uid:' + socket.uid + ':favourites', socket.uid, start, end, callback);
+	loadMorePosts('uid:' + data.uid + ':favourites', socket.uid, data, callback);
 };
 
 SocketPosts.loadMoreUserPosts = function(socket, data, callback) {
-	if(!data || !data.uid || !utils.isNumber(data.after)) {
+	loadMorePosts('uid:' + data.uid + ':posts', socket.uid, data, callback);
+};
+
+function loadMorePosts(set, uid, data, callback) {
+	if (!data || !utils.isNumber(data.uid) || !utils.isNumber(data.after)) {
 		return callback(new Error('[[error:invalid-data]]'));
 	}
 
 	var start = Math.max(0, parseInt(data.after, 10)),
-		end = start + 9;
+		stop = start + 9;
 
-	posts.getPostsFromSet('uid:' + data.uid + ':posts', socket.uid, start, end, callback);
-};
-
+	posts.getPostsFromSet(set, uid, start, stop, callback);
+}
 
 SocketPosts.getRecentPosts = function(socket, data, callback) {
 	if(!data || !data.count) {

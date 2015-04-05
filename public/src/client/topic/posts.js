@@ -1,13 +1,14 @@
 'use strict';
 
-/* globals config, app, ajaxify, components, define, socket, utils */
+/* globals config, app, ajaxify, define, socket, utils */
 
 define('forum/topic/posts', [
 	'forum/pagination',
 	'forum/infinitescroll',
 	'forum/topic/postTools',
-	'navigator'
-], function(pagination, infinitescroll, postTools, navigator) {
+	'navigator',
+	'components'
+], function(pagination, infinitescroll, postTools, navigator, components) {
 
 	var Posts = {};
 
@@ -22,8 +23,9 @@ define('forum/topic/posts', [
 		}
 
 		for (var i=0; i<data.posts.length; ++i) {
-			var postcount = components.get('user/postcount', data.posts[i].uid);
-			postcount.html(parseInt(postcount.html(), 10) + 1);
+			var cmp = components.get('user/postcount', data.posts[i].uid);
+			cmp.html(parseInt(cmp.attr('data-postcount'), 10) + 1);
+			utils.addCommasToNumbers(cmp);
 		}
 
 		createNewPosts(data, components.get('post').not('[data-index=0]'), function(html) {
@@ -56,9 +58,34 @@ define('forum/topic/posts', [
 		}
 
 		function removeAlreadyAddedPosts() {
-			data.posts = data.posts.filter(function(post) {
-				return components.get('post', 'pid', post.pid).length === 0;
-			});
+			var newPosts = components.get('topic').find('[data-index][data-index!="0"].new');
+
+			if (newPosts.length === data.posts.length) {
+				var allSamePids = true;
+				newPosts.each(function(index, el) {
+					if (parseInt($(el).attr('data-pid'), 10) !== parseInt(data.posts[index].pid, 10)) {
+						allSamePids = false;
+					}
+				});
+
+				if (allSamePids) {
+					newPosts.each(function() {
+						$(this).removeClass('new');
+					});
+					data.posts.length = 0;
+					return;
+				}
+			}
+
+			if (newPosts.length && data.posts.length > 1) {
+				data.posts.forEach(function(post) {
+					components.get('post', 'pid', post.pid).remove();
+				});
+			} else {
+				data.posts = data.posts.filter(function(post) {
+					return components.get('post', 'pid', post.pid).length === 0;
+				});
+			}
 		}
 
 		var after = null,
@@ -240,7 +267,7 @@ define('forum/topic/posts', [
 
 	function showBottomPostBar() {
 		if(components.get('post').length > 1 || !components.get('post', 'index', 0).length) {
-			$('.bottom-post-bar').removeClass('hide');
+			$('.bottom-post-bar').removeClass('hidden');
 		}
 	}
 

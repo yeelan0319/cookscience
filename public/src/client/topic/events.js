@@ -1,14 +1,15 @@
 
 'use strict';
 
-/* globals app, ajaxify, components, define, socket, translator, templates */
+/* globals app, ajaxify, define, socket, templates */
 
 define('forum/topic/events', [
 	'forum/topic/browsing',
 	'forum/topic/postTools',
 	'forum/topic/threadTools',
-	'forum/topic/posts'
-], function(browsing, postTools, threadTools, posts) {
+	'forum/topic/posts',
+	'components'
+], function(browsing, postTools, threadTools, posts, components) {
 
 	var Events = {};
 
@@ -167,31 +168,23 @@ define('forum/topic/events', [
 	}
 
 	function togglePostFavourite(data) {
-		var favBtn = $('[data-pid="' + data.post.pid + '"] .favourite');
+		var favBtn = $('[data-pid="' + data.post.pid + '"] [component="post/favourite"]');
+
 		if (!favBtn.length) {
 			return;
 		}
 
-		favBtn.addClass('btn-warning')
-			.attr('data-favourited', data.isFavourited);
+		favBtn.attr('data-favourited', data.isFavourited);
 
-		var icon = favBtn.find('i');
-		var className = icon.attr('class');
-		if (!className) {
-			return;
-		}
-		if (data.isFavourited ? className.indexOf('-o') !== -1 : className.indexOf('-o') === -1) {
-			icon.attr('class', data.isFavourited ? className.replace('-o', '') : className + '-o');
-		}
+		favBtn.find('[component="post/favourite/on"]').toggleClass('hidden', !data.isFavourited);
+		favBtn.find('[component="post/favourite/off"]').toggleClass('hidden', data.isFavourited);
 	}
 
 	function togglePostVote(data) {
 		var post = $('[data-pid="' + data.post.pid + '"]');
-
-		post.find('.upvote').toggleClass('btn-primary upvoted', data.upvote);
-		post.find('.downvote').toggleClass('btn-primary downvoted', data.downvote);
+		post.find('[component="post/upvote"]').toggleClass('upvoted', data.upvote);
+		post.find('[component="post/downvote"]').toggleClass('downvoted', data.downvote);
 	}
-
 
 	function onNewNotification(data) {
 		var tid = ajaxify.variables.get('topic_id');

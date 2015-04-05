@@ -1,7 +1,7 @@
 'use strict';
 
 
-/* globals define, app, components, templates, translator, socket, bootbox, config, ajaxify, RELATIVE_PATH, utils */
+/* globals define, app, templates, socket, bootbox, config, ajaxify, RELATIVE_PATH, utils */
 
 define('forum/topic', [
 	'forum/pagination',
@@ -12,8 +12,10 @@ define('forum/topic', [
 	'forum/topic/browsing',
 	'forum/topic/posts',
 	'navigator',
-	'sort'
-], function(pagination, infinitescroll, threadTools, postTools, events, browsing, posts, navigator, sort) {
+	'sort',
+	'components',
+	'translator'
+], function(pagination, infinitescroll, threadTools, postTools, events, browsing, posts, navigator, sort, components, translator) {
 	var	Topic = {},
 		currentUrl = '';
 
@@ -28,12 +30,7 @@ define('forum/topic', [
 	});
 
 	Topic.init = function() {
-		var tid = ajaxify.variables.get('topic_id'),
-			thread_state = {
-				locked: ajaxify.variables.get('locked'),
-				deleted: ajaxify.variables.get('deleted'),
-				pinned: ajaxify.variables.get('pinned')
-			};
+		var tid = ajaxify.variables.get('topic_id');
 
 		$(window).trigger('action:topic.loading');
 
@@ -41,8 +38,8 @@ define('forum/topic', [
 
 		posts.processPage($('.topic'));
 
-		postTools.init(tid, thread_state);
-		threadTools.init(tid, thread_state);
+		postTools.init(tid);
+		threadTools.init(tid);
 		events.init();
 
 		sort.handleSort('topicPostSort', 'user.setTopicSort', 'topic/' + ajaxify.variables.get('topic_slug'));
@@ -53,7 +50,7 @@ define('forum/topic', [
 
 		handleBookmark(tid);
 
-		navigator.init(components.get('post'), ajaxify.variables.get('postcount'), Topic.toTop, Topic.toBottom, Topic.navigatorCallback, Topic.calculateIndex);
+		navigator.init('[component="post"]', ajaxify.variables.get('postcount'), Topic.toTop, Topic.toBottom, Topic.navigatorCallback, Topic.calculateIndex);
 
 		$(window).on('scroll', updateTopicTitle);
 

@@ -1,10 +1,10 @@
 
 'use strict';
 
-/* globals app, components, define, ajaxify, utils, translator, config */
+/* globals app, define, ajaxify, utils, config */
 
 
-define('navigator', ['forum/pagination'], function(pagination) {
+define('navigator', ['forum/pagination', 'components'], function(pagination, components) {
 
 	var navigator = {};
 	var index = 1;
@@ -223,9 +223,9 @@ define('navigator', ['forum/pagination'], function(pagination) {
 
 		function highlightPost() {
 			if (highlight) {
-				scrollTo.parent().find('.topic-item').addClass('highlight');
+				scrollTo.parents('[component="post"]').addClass('highlight');
 				setTimeout(function() {
-					scrollTo.parent().find('.topic-item').removeClass('highlight');
+					scrollTo.parents('[component="post"]').removeClass('highlight');
 				}, 3000);
 			}
 		}

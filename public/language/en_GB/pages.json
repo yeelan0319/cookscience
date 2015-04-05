@@ -5,7 +5,8 @@
 	"recent": "Recent Topics",
 	"users": "Registered Users",
 	"notifications": "Notifications",
-	"tags": "Topics tagged under \"%1\"",
+	"tags": "Tags",
+	"tag": "Topics tagged under \"%1\"",
 	"user.edit": "Editing \"%1\"",
 	"user.following": "People %1 Follows",
 	"user.followers": "People who Follow %1",
@@ -14,6 +15,7 @@
 	"user.groups": "%1's Groups",
 	"user.favourites": "%1's Favourite Posts",
 	"user.settings": "User Settings",
+	"user.watched": "Topics watched by %1",
 
 	"maintenance.text": "%1 is currently undergoing maintenance. Please come back another time.",
 	"maintenance.messageIntro": "Additionally, the administrator has left this message:"

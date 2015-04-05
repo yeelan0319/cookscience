@@ -5,7 +5,8 @@
     "recent": "Senaste ämnena",
     "users": "Registrerade användare",
     "notifications": "Notiser",
-    "tags": "Ämnen märkta med \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Ändrar \"%1\"",
     "user.following": "Personer %1 Följer",
     "user.followers": "Personer som följer %1",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "%1's favorit-inlägg",
     "user.settings": "Avnändarinställningar",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 genomgår underhåll just nu. Vänligen kom tillbaka lite senare.",
     "maintenance.messageIntro": "Ytterligare så lämnade administratören detta meddelande:"
 }
