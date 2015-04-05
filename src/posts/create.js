@@ -33,7 +33,7 @@ module.exports = function(Posts) {
 					'pid': pid,
 					'uid': uid,
 					'tid': tid,
-					'content': content,
+					'content': JSON.stringify(content),  //可以考虑将content整体转换成一个js的obj
 					'timestamp': timestamp,
 					'reputation': 0,
 					'votes': 0,

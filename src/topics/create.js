@@ -12,7 +12,8 @@ var async = require('async'),
 	threadTools = require('../threadTools'),
 	postTools = require('../postTools'),
 	privileges = require('../privileges'),
-	categories = require('../categories');
+	categories = require('../categories'),
+	_ = require('underscore');
 
 module.exports = function(Topics) {
 
@@ -214,11 +215,16 @@ module.exports = function(Topics) {
 			},
 			function(filteredData, next) {
 				content = filteredData.content || data.content;
-				if (content) {
+				if (content && typeof content === 'string') {
 					content = content.trim();
+					checkContentLength(content, next);
 				}
-
-				checkContentLength(content, next);
+				else{
+					_.each(content, function(sub, key){
+						content[key] = sub.trim();
+					});
+					next();
+				}
 			},
 			function(next) {
 				posts.create({uid: uid, tid: tid, handle: data.handle, content: content, toPid: data.toPid, ip: data.req ? data.req.ip : null}, next);

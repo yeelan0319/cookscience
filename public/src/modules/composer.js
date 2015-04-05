@@ -220,7 +220,8 @@ define('composer', [
 		var postContainer = $('#cmp-uuid-' + post_uuid);
 		if (postContainer.length) {
 			activate(post_uuid);
-			resize.reposition(postContainer);
+			postContainer.modal('show');
+			//resize.reposition(postContainer);
 			focusElements(postContainer);
 		} else {
 			createNewComposer(post_uuid);
@@ -297,7 +298,7 @@ define('composer', [
 
 			composerTemplate.attr('id', 'cmp-uuid-' + post_uuid);
 
-			$(document.body).append(composerTemplate);
+			$('body').append(composerTemplate);
 
 			var postContainer = $(composerTemplate[0]),
 				bodyEl = postContainer.find('textarea'),
@@ -309,7 +310,7 @@ define('composer', [
 			updateTitle(postData, postContainer);
 
 			activate(post_uuid);
-			resize.reposition(postContainer);
+			//resize.reposition(postContainer);
 
 			if (config.allowFileUploads || config.hasImageUploadPlugin) {
 				uploads.initialize(post_uuid);
@@ -382,6 +383,8 @@ define('composer', [
 
 			formatting.addComposerButtons();
 			focusElements(postContainer);
+
+			postContainer.modal('show');
 		});
 	}
 
@@ -469,13 +472,13 @@ define('composer', [
 			postContainer = $('#cmp-uuid-' + post_uuid),
 			handleEl = postContainer.find('.handle'),
 			titleEl = postContainer.find('.title'),
-			bodyEl = postContainer.find('textarea'),
+			//bodyEl = postContainer.find('textarea'),
 			thumbEl = postContainer.find('input#topic-thumb-url');
 
 		options = options || {};
 
 		titleEl.val(titleEl.val().trim());
-		bodyEl.val(bodyEl.val().trim());
+		//bodyEl.val(bodyEl.val().trim());
 		if (thumbEl.length) {
 			thumbEl.val(thumbEl.val().trim());
 		}
@@ -490,20 +493,28 @@ define('composer', [
 			return composerAlert('[[error:title-too-long, ' + config.maximumTitleLength + ']]');
 		} else if (checkTitle && !utils.slugify(titleEl.val()).length) {
 			return composerAlert('[[error:invalid-title]]');
-		} else if (bodyEl.val().length < parseInt(config.minimumPostLength, 10)) {
-			return composerAlert('[[error:content-too-short, ' + config.minimumPostLength + ']]');
-		} else if (bodyEl.val().length > parseInt(config.maximumPostLength, 10)) {
-			return composerAlert('[[error:content-too-long, ' + config.maximumPostLength + ']]');
+		// } else if (bodyEl.val().length < parseInt(config.minimumPostLength, 10)) {
+		// 	return composerAlert('[[error:content-too-short, ' + config.minimumPostLength + ']]');
+		// } else if (bodyEl.val().length > parseInt(config.maximumPostLength, 10)) {
+		// 	return composerAlert('[[error:content-too-long, ' + config.maximumPostLength + ']]');
+		} else if (parseInt(postData.cid, 10) === 0) {
+			return composerAlert('Please select the category of the procedure');
 		}
 
 		var composerData = {}, action;
 
-		if (parseInt(postData.cid, 10) > 0) {
+		 if (parseInt(postData.cid, 10) > 0) {
 			action = 'topics.post';
 			composerData = {
 				handle: handleEl ? handleEl.val() : undefined,
 				title: titleEl.val(),
-				content: bodyEl.val(),
+				content: {
+					purpose: postContainer.find('textarea.purpose').val().trim(),
+					reagents: postContainer.find('textarea.reagents').val().trim(),
+					procedure: postContainer.find('textarea.procedure').val().trim(),
+					result: postContainer.find('textarea.results').val().trim(),
+					reference: postContainer.find('textarea.reference').val().trim()
+				},
 				topic_thumb: thumbEl.val() || '',
 				category_id: postData.cid,
 				tags: tags.getTags(post_uuid),
@@ -514,7 +525,7 @@ define('composer', [
 			composerData = {
 				tid: postData.tid,
 				handle: handleEl ? handleEl.val() : undefined,
-				content: bodyEl.val(),
+				content: postContainer.find('textarea').val().trim(),
 				toPid: postData.toPid,
 				lock: options.lock || false
 			};
@@ -549,7 +560,11 @@ define('composer', [
 
 	function discard(post_uuid) {
 		if (composer.posts[post_uuid]) {
-			$('#cmp-uuid-' + post_uuid).remove();
+			var postContainer = $('#cmp-uuid-' + post_uuid);
+			postContainer.on('hidden.bs.modal', function(){
+				$(this).remove();
+			});
+			postContainer.modal('hide');
 			drafts.removeDraft(composer.posts[post_uuid].save_id);
 			stopNotifyInterval(composer.posts[post_uuid]);
 			stopNotifyTyping(composer.posts[post_uuid]);

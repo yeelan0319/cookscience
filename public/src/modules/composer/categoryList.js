@@ -21,7 +21,7 @@ define('composer/categoryList', function() {
 			categories = categories.filter(function(category) {
 				return !category.link;
 			});
-
+			
 			categories.forEach(function(category) {
 				$('<option value="' + category.cid + '">' + category.name + '</option>').appendTo(listEl);
 			});
@@ -32,7 +32,7 @@ define('composer/categoryList', function() {
 		});
 
 		listEl.on('change', function() {
-			if (postData.cid) {
+			if (postData.cid >= 0) {
 				postData.cid = this.value;
 			}
 
