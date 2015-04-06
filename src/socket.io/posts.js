@@ -282,10 +282,10 @@ SocketPosts.edit = function(socket, data, callback) {
 		return callback(new Error('[[error:title-too-short, ' + meta.config.minimumTitleLength + ']]'));
 	} else if (data.title.length > parseInt(meta.config.maximumTitleLength, 10)) {
 		return callback(new Error('[[error:title-too-long, ' + meta.config.maximumTitleLength + ']]'));
-	} else if (!data.content || data.content.length < parseInt(meta.config.minimumPostLength, 10)) {
-		return callback(new Error('[[error:content-too-short, ' + meta.config.minimumPostLength + ']]'));
-	} else if (data.content.length > parseInt(meta.config.maximumPostLength, 10)) {
-		return callback(new Error('[[error:content-too-long, ' + meta.config.maximumPostLength + ']]'));
+	// } else if (!data.content || data.content.length < parseInt(meta.config.minimumPostLength, 10)) {
+	// 	return callback(new Error('[[error:content-too-short, ' + meta.config.minimumPostLength + ']]'));
+	// } else if (data.content.length > parseInt(meta.config.maximumPostLength, 10)) {
+	// 	return callback(new Error('[[error:content-too-long, ' + meta.config.maximumPostLength + ']]'));
 	}
 
 	// uid, pid, title, content, options
@@ -294,7 +294,7 @@ SocketPosts.edit = function(socket, data, callback) {
 		handle: data.handle,
 		pid: data.pid,
 		title: data.title,
-		content: data.content,
+		content: JSON.stringify(data.content),
 		options: {
 			topic_thumb: data.topic_thumb,
 			tags: data.tags
