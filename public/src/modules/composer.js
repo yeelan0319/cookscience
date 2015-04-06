@@ -401,11 +401,6 @@ define('composer', [
 			postContainer.find('textarea.results').val(temp.result);
 			postContainer.find('textarea.reference').val(temp.reference);
 
-<<<<<<< HEAD
-			bodyEl.val(draft ? draft : postData.body);
-
-=======
->>>>>>> c5d5445cdcb6cd3234e4df29ce2e152940488a65
 			preview.render(postContainer, function() {
 				preview.matchScroll(postContainer);
 			});
