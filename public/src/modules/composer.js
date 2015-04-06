@@ -301,7 +301,7 @@ define('composer', [
 			$('body').append(composerTemplate);
 
 			var postContainer = $(composerTemplate[0]),
-				bodyEl = postContainer.find('textarea'),
+				//bodyEl = postContainer.find('textarea'),
 				draft = drafts.getDraft(postData.save_id);
 
 			tags.init(postContainer, composer.posts[post_uuid]);
@@ -358,15 +358,22 @@ define('composer', [
 				}
 			});
 
-			bodyEl.on('input propertychange', function() {
-				preview.render(postContainer);
-			});
+			// bodyEl.on('input propertychange', function() {
+			// 	preview.render(postContainer);
+			// });
 
-			bodyEl.on('scroll', function() {
-				preview.matchScroll(postContainer);
-			});
+			// bodyEl.on('scroll', function() {
+			// 	preview.matchScroll(postContainer);
+			// });
 
-			bodyEl.val(draft ? draft : postData.body);
+			//bodyEl.val(draft ? draft : postData.body);
+			var temp = draft? draft : JSON.parse(postData.body);
+			postContainer.find('textarea.purpose').val(temp.purpose);
+			postContainer.find('textarea.reagents').val(temp.reagents);
+			postContainer.find('textarea.procedure').val(temp.procedure);
+			postContainer.find('textarea.results').val(temp.result);
+			postContainer.find('textarea.reference').val(temp.reference);
+
 			preview.render(postContainer, function() {
 				preview.matchScroll(postContainer);
 			});
@@ -534,7 +541,13 @@ define('composer', [
 			composerData = {
 				pid: postData.pid,
 				handle: handleEl ? handleEl.val() : undefined,
-				content: bodyEl.val(),
+				content: {
+					purpose: postContainer.find('textarea.purpose').val().trim(),
+					reagents: postContainer.find('textarea.reagents').val().trim(),
+					procedure: postContainer.find('textarea.procedure').val().trim(),
+					result: postContainer.find('textarea.results').val().trim(),
+					reference: postContainer.find('textarea.reference').val().trim()
+				},
 				title: titleEl.val(),
 				topic_thumb: thumbEl.val() || '',
 				tags: tags.getTags(post_uuid)
