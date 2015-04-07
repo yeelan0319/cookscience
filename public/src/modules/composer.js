@@ -480,6 +480,22 @@ define('composer', [
 		}
 	}
 
+	composer.reply = function(postData){
+		$('[data-action="post"]').attr('disabled', true);
+		socket.emit('posts.reply', postData, function (err, data) {
+			$('[data-action="post"]').removeAttr('disabled');
+			if (err) {
+				if (err.message === '[[error:email-not-confirmed]]') {
+					return app.showEmailConfirmWarning(err);
+				}
+
+				return app.alertError(err.message);
+			}
+
+			$('.reply-container textarea').val('');
+		});
+	}
+
 	function post(post_uuid, options) {
 		var postData = composer.posts[post_uuid],
 			postContainer = $('#cmp-uuid-' + post_uuid),
