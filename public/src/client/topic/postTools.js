@@ -15,6 +15,8 @@ define('forum/topic/postTools', ['composer', 'share', 'navigator'], function(com
 		share.addShareHandlers(topicName);
 
 		addVoteHandler();
+
+		addReplyHandler();
 	};
 
 	PostTools.toggle = function(pid, isDeleted) {
@@ -137,27 +139,40 @@ define('forum/topic/postTools', ['composer', 'share', 'navigator'], function(com
 		});
 	}
 
+	function addReplyHandler(){
+		var replyContainer = components.get('reply');
+		replyContainer.on('click', '[component="reply/submit"]', function(e) {
+			var postData = {
+				tid: components.get('reply').data('tid'), 
+				pid: components.get('topic').find('li.post-row').data('pid'),
+				content: components.get('reply').find('textarea').val().trim()
+			};
+			composer.reply(postData);
+		});
+	}
+
 	function onReplyClicked(button, tid, topicName) {
-		var selectionText = '',
-			selection = window.getSelection ? window.getSelection() : document.selection.createRange();
+		// var selectionText = '',
+		// 	selection = window.getSelection ? window.getSelection() : document.selection.createRange();
 
-		if ($(selection.baseNode).parents('[component="post/content"]').length > 0) {
-			var snippet = selection.toString();
-			if (snippet.length) {
-				selectionText = '> ' + snippet.replace(/\n/g, '\n> ') + '\n\n';
-			}
-		}
+		// if ($(selection.baseNode).parents('[component="post/content"]').length > 0) {
+		// 	var snippet = selection.toString();
+		// 	if (snippet.length) {
+		// 		selectionText = '> ' + snippet.replace(/\n/g, '\n> ') + '\n\n';
+		// 	}
+		// }
 
-		var username = getUserName(selectionText ? $(selection.baseNode) : button);
-		if (getData(button, 'data-uid') === '0') {
-			username = '';
-		}
-		if (selectionText.length) {
-			composer.addQuote(tid, ajaxify.variables.get('topic_slug'), getData(button, 'data-index'), getData(button, 'data-pid'), topicName, username, selectionText);
-		} else {
-			composer.newReply(tid, getData(button, 'data-pid'), topicName, username ? username + ' ' : '');
-		}
-
+		// var username = getUserName(selectionText ? $(selection.baseNode) : button);
+		// if (getData(button, 'data-uid') === '0') {
+		// 	username = '';
+		// }
+		// if (selectionText.length) {
+		// 	composer.addQuote(tid, ajaxify.variables.get('topic_slug'), getData(button, 'data-index'), getData(button, 'data-pid'), topicName, username, selectionText);
+		// } else {
+		// 	composer.newReply(tid, getData(button, 'data-pid'), topicName, username ? username + ' ' : '');
+		// }
+		$('.reply-container textarea').focus();
+		$(body).scrollTop($('.reply-container').offset().top);
 	}
 
 	function onQuoteClicked(button, tid, topicName) {
