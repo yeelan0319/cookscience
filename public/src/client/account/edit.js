@@ -46,39 +46,41 @@ define('forum/account/edit', ['forum/account/header', 'uploader'], function(head
 			signature: $('#inputSignature').val()
 		};
 
-		socket.emit('user.updateProfile', userData, function(err, data) {
-			if (err) {
-				return app.alertError(err.message);
-			}
+		$(window).trigger('action:profile.update', [userData, function(userData){
+			socket.emit('user.updateProfile', userData, function(err, data) {
+				if (err) {
+					return app.alertError(err.message);
+				}
 
-			app.alertSuccess('[[user:profile_update_success]]');
+				app.alertSuccess('[[user:profile_update_success]]');
 
-			if (data.picture) {
-				$('#user-current-picture').attr('src', data.picture);
-			}
+				if (data.picture) {
+					$('#user-current-picture').attr('src', data.picture);
+				}
 
-			if (data.gravatarpicture) {
-				$('#user-gravatar-picture').attr('src', data.gravatarpicture);
-				gravatarPicture = data.gravatarpicture;
-			}
+				if (data.gravatarpicture) {
+					$('#user-gravatar-picture').attr('src', data.gravatarpicture);
+					gravatarPicture = data.gravatarpicture;
+				}
 
-			if (data.userslug) {
-				var oldslug = $('.account-username-box').attr('data-userslug');
-				$('.account-username-box a').each(function(index) {
-					$(this).attr('href', $(this).attr('href').replace(oldslug, data.userslug));
-				});
+				if (data.userslug) {
+					var oldslug = $('.account-username-box').attr('data-userslug');
+					$('.account-username-box a').each(function(index) {
+						$(this).attr('href', $(this).attr('href').replace(oldslug, data.userslug));
+					});
 
-				$('.account-username-box').attr('data-userslug', data.userslug);
-			}
+					$('.account-username-box').attr('data-userslug', data.userslug);
+				}
 
-			if (currentEmail !== data.email) {
-				currentEmail = data.email;
-				$('#confirm-email').removeClass('hide');
-			}
+				if (currentEmail !== data.email) {
+					currentEmail = data.email;
+					$('#confirm-email').removeClass('hide');
+				}
 
-			updateHeader(data.picture, userData.username, data.userslug);
-		});
-
+				updateHeader(data.picture, userData.username, data.userslug);
+			});
+		}]);
+		
 		return false;
 	}
 

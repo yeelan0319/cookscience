@@ -23,111 +23,113 @@ module.exports = function(User) {
 
 			data = data.settings;
 			var fields = ['username', 'email', 'fullname', 'website', 'location', 'birthday', 'signature'];
-
-			function isSignatureValid(next) {
-				if (data.signature !== undefined && data.signature.length > meta.config.maximumSignatureLength) {
-					next(new Error('[[error:signature-too-long, ' + meta.config.maximumSignatureLength + ']]'));
-				} else {
-					next();
-				}
-			}
-
-			function isEmailAvailable(next) {
-				if (!data.email) {
-					return next();
+			plugins.fireHook('filter:user.customProfile', fields, function(err, fields){
+				
+				function isSignatureValid(next) {
+					if (data.signature !== undefined && data.signature.length > meta.config.maximumSignatureLength) {
+						next(new Error('[[error:signature-too-long, ' + meta.config.maximumSignatureLength + ']]'));
+					} else {
+						next();
+					}
 				}
 
-				if (!utils.isEmailValid(data.email)) {
-					return next(new Error('[[error:invalid-email]]'));
-				}
-
-				User.getUserField(uid, 'email', function(err, email) {
-					if(email === data.email) {
+				function isEmailAvailable(next) {
+					if (!data.email) {
 						return next();
 					}
 
-					User.email.available(data.email, function(err, available) {
-						if (err) {
-							return next(err);
+					if (!utils.isEmailValid(data.email)) {
+						return next(new Error('[[error:invalid-email]]'));
+					}
+
+					User.getUserField(uid, 'email', function(err, email) {
+						if(email === data.email) {
+							return next();
 						}
 
-						next(!available ? new Error('[[error:email-taken]]') : null);
+						User.email.available(data.email, function(err, available) {
+							if (err) {
+								return next(err);
+							}
+
+							next(!available ? new Error('[[error:email-taken]]') : null);
+						});
 					});
-				});
-			}
-
-			function isUsernameAvailable(next) {
-				if (!data.username) {
-					return next();
 				}
-				User.getUserFields(uid, ['username', 'userslug'], function(err, userData) {
 
-					var userslug = utils.slugify(data.username);
-
-					if(userslug === userData.userslug) {
+				function isUsernameAvailable(next) {
+					if (!data.username) {
 						return next();
 					}
+					User.getUserFields(uid, ['username', 'userslug'], function(err, userData) {
 
-					if (data.username.length < meta.config.minimumUsernameLength) {
-						return next(new Error('[[error:username-too-short]]'));
-					}
+						var userslug = utils.slugify(data.username);
 
-					if (data.username.length > meta.config.maximumUsernameLength) {
-						return next(new Error('[[error:username-too-long]]'));
-					}
-
-					if(!utils.isUserNameValid(data.username) || !userslug) {
-						return next(new Error('[[error:invalid-username]]'));
-					}
-
-					User.exists(userslug, function(err, exists) {
-						if(err) {
-							return next(err);
+						if(userslug === userData.userslug) {
+							return next();
 						}
 
-						next(exists ? new Error('[[error:username-taken]]') : null);
-					});
-				});
-			}
+						if (data.username.length < meta.config.minimumUsernameLength) {
+							return next(new Error('[[error:username-too-short]]'));
+						}
 
-			async.series([isSignatureValid, isEmailAvailable, isUsernameAvailable], function(err, results) {
-				if (err) {
-					return callback(err);
+						if (data.username.length > meta.config.maximumUsernameLength) {
+							return next(new Error('[[error:username-too-long]]'));
+						}
+
+						if(!utils.isUserNameValid(data.username) || !userslug) {
+							return next(new Error('[[error:invalid-username]]'));
+						}
+
+						User.exists(userslug, function(err, exists) {
+							if(err) {
+								return next(err);
+							}
+
+							next(exists ? new Error('[[error:username-taken]]') : null);
+						});
+					});
 				}
 
-				async.each(fields, updateField, function(err) {
+				async.series([isSignatureValid, isEmailAvailable, isUsernameAvailable], function(err, results) {
 					if (err) {
 						return callback(err);
 					}
-					plugins.fireHook('action:user.updateProfile', {data: data, uid: uid});
-					User.getUserFields(uid, ['email', 'username', 'userslug', 'picture', 'gravatarpicture'], callback);
+
+					async.each(fields, updateField, function(err) {
+						if (err) {
+							return callback(err);
+						}
+						plugins.fireHook('action:user.updateProfile', {data: data, uid: uid});
+						User.getUserFields(uid, ['email', 'username', 'userslug', 'picture', 'gravatarpicture'], callback);
+					});
 				});
-			});
 
-			function updateField(field, next) {
-				if (!(data[field] !== undefined && typeof data[field] === 'string')) {
-					return next();
-				}
-
-				data[field] = data[field].trim();
-				data[field] = validator.escape(data[field]);
-
-				if (field === 'email') {
-					return updateEmail(uid, data.email, next);
-				} else if (field === 'username') {
-					return updateUsername(uid, data.username, next);
-				} else if (field === 'fullname') {
-					return updateFullname(uid, data.fullname, next);
-				} else if (field === 'signature') {
-					data[field] = S(data[field]).stripTags().s;
-				} else if (field === 'website') {
-					if (!data[field].startsWith(validator.escape('http://')) && !data[field].startsWith(validator.escape('https://'))) {
-						data[field] = validator.escape('http://') + data[field];
+				function updateField(field, next) {
+					if (!(data[field] !== undefined && typeof data[field] === 'string')) {
+						return next();
 					}
-				}
 
-				User.setUserField(uid, field, data[field], next);
-			}
+					data[field] = data[field].trim();
+					data[field] = validator.escape(data[field]);
+
+					if (field === 'email') {
+						return updateEmail(uid, data.email, next);
+					} else if (field === 'username') {
+						return updateUsername(uid, data.username, next);
+					} else if (field === 'fullname') {
+						return updateFullname(uid, data.fullname, next);
+					} else if (field === 'signature') {
+						data[field] = S(data[field]).stripTags().s;
+					} else if (field === 'website') {
+						if (!data[field].startsWith(validator.escape('http://')) && !data[field].startsWith(validator.escape('https://'))) {
+							data[field] = validator.escape('http://') + data[field];
+						}
+					}
+
+					User.setUserField(uid, field, data[field], next);
+				}
+			});	
 		});
 	};
 
