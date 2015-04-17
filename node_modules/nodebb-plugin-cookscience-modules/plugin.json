@@ -1,0 +1,20 @@
+{
+	"id": "nodebb-plugin-cookscience-modules",
+	"name": "Plugin tailored for cookscience.org",
+	"description": "This is not a public nodebb plugin and it is source controlled by main cookscience git repository",
+	"library": "./library.js",
+	"hooks": [
+
+		{ "hook": "static:app.load", "method": "init"},
+
+		{ "hook": "filter:user.updateProfile", "method": "addCustomField"}
+		
+	],
+	"templates": "public/templates",
+	"scripts": [
+      "public/myhomepage.js"
+    ],
+    "css": [
+      "public/myhomepage.css"
+    ]
+}

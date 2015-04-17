@@ -40,6 +40,7 @@ module.exports = function(User) {
 
 				if (!utils.isEmailValid(data.email)) {
 					return next(new Error('[[error:invalid-email]]'));
+				
 				}
 
 				User.getUserField(uid, 'email', function(err, email) {
@@ -129,7 +130,7 @@ module.exports = function(User) {
 
 				User.setUserField(uid, field, data[field], next);
 			}
-		});
+		});	
 	};
 
 	function updateEmail(uid, newEmail, callback) {

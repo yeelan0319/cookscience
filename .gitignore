@@ -1,14 +1,6 @@
 npm-debug.log
 node_modules/*
-!node_modules/nodebb-plugin-custom-homepage
-!node_modules/nodebb-plugin-dbsearch/
-node_modules/nodebb-plugin-dbsearch/node_modules/
-!node_modules/nodebb-plugin-csv-tool/
-node_modules/nodebb-plugin-csv-tool/node_modules/
-!node_modules/nodebb-plugin-sso-linkedin-oauth2/
-node_modules/nodebb-plugin-sso-linkedin-oauth2/node_modules/
-!node_modules/nodebb-plugin-markdown/
-node_modules/nodebb-plugin-markdown/node_modules/
+!node_modules/nodebb-plugin-cookscience-modules
 sftp-config.json
 config.json
 public/src/nodebb.min.js

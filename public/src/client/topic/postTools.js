@@ -144,7 +144,9 @@ define('forum/topic/postTools', ['share', 'navigator', 'components', 'translator
 				pid: components.get('topic').find('li.post-row').data('pid'),
 				content: components.get('reply').find('textarea').val().trim()
 			};
-			composer.reply(postData);
+			require(['composer'], function(composer) {
+				composer.reply(postData);
+			});
 		});
 	}
 
