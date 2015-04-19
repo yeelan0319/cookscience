@@ -1,0 +1,18 @@
+mongo:
+  image: mongo:3.0.1
+  command: mongod --smallfiles 
+  volumes:
+    - /var/lib/mongodb/:/data/db
+web:
+  build: .
+  command: node app.js 
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  ports: 
+    - "80:4567"
+  restart: always
+  volumes:
+    - ./:/usr/src/cookscience
+    - /mnt/mydata/uploads/:/usr/src/cookscience/public/uploads/
+  links:
+    - mongo

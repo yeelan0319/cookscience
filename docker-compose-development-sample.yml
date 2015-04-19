@@ -1,0 +1,16 @@
+mongo:
+  image: mongo:3.0.1
+  command: mongod --smallfiles 
+  volumes:
+    - /var/lib/mongodb/:/data/db
+web:
+  build: .
+  command: node app.js 
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  ports: 
+    - "4567:4567"
+  volumes:
+    - ./:/usr/src/cookscience
+  links:
+    - mongo
