@@ -47,6 +47,7 @@ var async = require('async'),
 			getEphemeralGroup: function(groupName) {
 				return {
 					name: groupName,
+					slug: utils.slugify(groupName),
 					description: '',
 					deleted: '0',
 					hidden: '0',
@@ -65,6 +66,10 @@ var async = require('async'),
 			},
 			isPrivilegeGroup: /^cid:\d+:privileges:[\w:]+$/
 		};
+
+	Groups.getEphemeralGroups = function() {
+		return ephemeralGroups;
+	};
 
 	Groups.list = function(options, callback) {
 		db.getSortedSetRevRange('groups:createtime', 0, -1, function (err, groupNames) {
@@ -88,8 +93,8 @@ var async = require('async'),
 		});
 	};
 
-	Groups.getGroups = function(start, end, callback) {
-		db.getSortedSetRevRange('groups:createtime', start, end, callback);
+	Groups.getGroups = function(start, stop, callback) {
+		db.getSortedSetRevRange('groups:createtime', start, stop, callback);
 	};
 
 	Groups.get = function(groupName, options, callback) {
@@ -121,7 +126,7 @@ var async = require('async'),
 
 					if (options.expand) {
 						async.waterfall([
-							async.apply(async.map, uids, user.getUserData),
+							async.apply(user.getUsers, uids, options.uid || 0),
 							function(users, next) {
 								// Filter out non-matches
 								users = users.filter(Boolean);
@@ -271,7 +276,15 @@ var async = require('async'),
 	};
 
 	Groups.getGroupFields = function(groupName, fields, callback) {
-		db.getObjectFields('group:' + groupName, fields, callback);
+		Groups.getMultipleGroupFields([groupName], fields, function(err, groups) {
+			callback(err, groups ? groups[0] : null);
+		});
+	};
+
+	Groups.getMultipleGroupFields = function(groups, fields, callback) {
+		db.getObjectsFields(groups.map(function(group) {
+			return 'group:' + group;
+		}), fields, callback);
 	};
 
 	Groups.setGroupField = function(groupName, field, value, callback) {
@@ -302,8 +315,14 @@ var async = require('async'),
 		});
 	};
 
-	Groups.getMembers = function(groupName, start, end, callback) {
-		db.getSortedSetRevRange('group:' + groupName + ':members', start, end, callback);
+	Groups.getMembers = function(groupName, start, stop, callback) {
+		db.getSortedSetRevRange('group:' + groupName + ':members', start, stop, callback);
+	};
+
+	Groups.getMembersOfGroups = function(groupNames, callback) {
+		db.getSortedSetsMembers(groupNames.map(function(name) {
+			return 'group:' + name + ':members';
+		}), callback);
 	};
 
 	Groups.isMember = function(uid, groupName, callback) {

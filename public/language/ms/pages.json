@@ -5,7 +5,8 @@
     "recent": "Topik Baru",
     "users": "Pengguna Berdaftar",
     "notifications": "Makluman",
-    "tags": "Topics tagged under \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Menyunting \"%1\"",
     "user.following": "Pengguna yang %1 Ikuti",
     "user.followers": "Pengguna yang Mengikuti %1",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "Mesej Kegemaran %1",
     "user.settings": "Tetapan pengguna",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 is currently undergoing maintenance. Please come back another time.",
     "maintenance.messageIntro": "Additionally, the administrator has left this message:"
 }

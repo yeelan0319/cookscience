@@ -9,7 +9,8 @@ var	async = require('async'),
 	meta = require('./meta'),
 	topics = require('./topics'),
 	groups = require('./groups'),
-	Password = require('./password');
+	Password = require('./password'),
+	utils = require('../public/src/utils');
 
 (function(User) {
 
@@ -240,7 +241,7 @@ var	async = require('async'),
 	};
 
 	User.getUsers = function(uids, uid, callback) {
-		var fields = ['uid', 'username', 'userslug', 'picture', 'status', 'banned', 'postcount', 'reputation', 'email:confirmed'];
+		var fields = ['uid', 'username', 'userslug', 'picture', 'status', 'banned', 'joindate', 'postcount', 'reputation', 'email:confirmed'];
 		plugins.fireHook('filter:users.addFields', {fields: fields}, function(err, data) {
 			if (err) {
 				return callback(err);
@@ -268,6 +269,7 @@ var	async = require('async'),
 						return;
 					}
 					user.status = User.getStatus(user.status, results.isOnline[index]);
+					user.joindateISO = utils.toISOString(user.joindate);
 					user.administrator = results.isAdmin[index];
 					user.banned = parseInt(user.banned, 10) === 1;
 					user['email:confirmed'] = parseInt(user['email:confirmed'], 10) === 1;
@@ -415,15 +417,25 @@ var	async = require('async'),
 			});
 
 			var groupNames = uniqueCids.map(function(cid) {
-				return 'cid:' + cid + ':privileges:mods';
-			});
+					return 'cid:' + cid + ':privileges:mods';	// At some point we should *probably* change this to "moderate" as well
+				}),
+				groupListNames = uniqueCids.map(function(cid) {
+					return 'cid:' + cid + ':privileges:groups:moderate';
+				});
 
-			groups.isMemberOfGroups(uid, groupNames, function(err, isMembers) {
+			async.parallel({
+				user: async.apply(groups.isMemberOfGroups, uid, groupNames),
+				group: async.apply(groups.isMemberOfGroupsList, uid, groupListNames)
+			}, function(err, checks) {
 				if (err) {
 					return callback(err);
 				}
 
-				var map = {};
+				var isMembers = checks.user.map(function(isMember, idx) {
+						return isMember || checks.group[idx]
+					}),
+					map = {};
+
 				uniqueCids.forEach(function(cid, index) {
 					map[cid] = isMembers[index];
 				});
@@ -434,9 +446,23 @@ var	async = require('async'),
 			});
 		} else {
 			if (Array.isArray(uid)) {
-				groups.isMembers(uid, 'cid:' + cid + ':privileges:mods', filterIsModerator);
+				async.parallel([
+					async.apply(groups.isMembers, uid, 'cid:' + cid + ':privileges:mods'),
+					async.apply(groups.isMembers, uid, 'cid:' + cid + ':privileges:groups:moderate')
+				], function(err, checks) {
+					var isModerator = checks[0].map(function(isMember, idx) {
+							return isMember || checks[1][idx]
+						});
+					filterIsModerator(null, isModerator);
+				});
 			} else {
-				groups.isMember(uid, 'cid:' + cid + ':privileges:mods', filterIsModerator);
+				async.parallel([
+					async.apply(groups.isMember, uid, 'cid:' + cid + ':privileges:mods'),
+					async.apply(groups.isMember, uid, 'cid:' + cid + ':privileges:groups:moderate')
+				], function(err, checks) {
+					var isModerator = checks[0] || checks[1];
+					filterIsModerator(null, isModerator);
+				});
 			}
 		}
 	};

@@ -5,7 +5,8 @@
     "recent": "Subiecte Noi",
     "users": "Utilizatori înregistrați",
     "notifications": "Notificări",
-    "tags": "Subiecte tăguite cu \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Editează \"%1\"",
     "user.following": "Utilizatori urmăriți de %1",
     "user.followers": "Utilizatori care îl urmăresc pe %1",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "Mesajele favorite ale lui %1",
     "user.settings": "Setări Utilizator",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 este momentan în mentenanță. Întoarce-te în curând!",
     "maintenance.messageIntro": "Additionally, the administrator has left this message:"
 }

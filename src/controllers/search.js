@@ -15,10 +15,9 @@ searchController.search = function(req, res, next) {
 		return helpers.notFound(req, res);
 	}
 
-	var uid = req.user ? req.user.uid : 0;
 	var breadcrumbs = helpers.buildBreadcrumbs([{text: '[[global:search]]'}]);
 
-	categories.getCategoriesByPrivilege(uid, 'read', function(err, categories) {
+	categories.getCategoriesByPrivilege(req.uid, 'read', function(err, categories) {
 		if (err) {
 			return next(err);
 		}
@@ -42,7 +41,7 @@ searchController.search = function(req, res, next) {
 			sortBy: req.query.sortBy,
 			sortDirection: req.query.sortDirection,
 			page: page,
-			uid: uid
+			uid: req.uid
 		};
 
 		search.search(data, function(err, results) {
@@ -56,8 +55,7 @@ searchController.search = function(req, res, next) {
 			results.showAsTopics = req.query.showAs === 'topics';
 			results.breadcrumbs = breadcrumbs;
 			results.categories = categories;
-			results.expandSearch = false;
-			
+			results.expandSearch = !req.params.term;
 			plugins.fireHook('filter:search.build', {data: data, results: results}, function(err, data) {
 				if (err) {
 					return next(err);

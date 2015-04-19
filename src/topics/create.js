@@ -20,7 +20,8 @@ module.exports = function(Topics) {
 	Topics.create = function(data, callback) {
 		var uid = data.uid,
 			title = data.title,
-			cid = data.cid;
+			cid = data.cid,
+			tags = data.tags;
 
 		db.incrObjectField('global', 'nextTid', function(err, tid) {
 			if (err) {
@@ -79,7 +80,7 @@ module.exports = function(Topics) {
 						db.incrObjectField('global', 'topicCount', next);
 					},
 					function(next) {
-						Topics.createTags(data.tags, tid, timestamp, next);
+						Topics.createTags(tags, tid, timestamp, next);
 					}
 				], function(err) {
 					if (err) {
@@ -96,7 +97,8 @@ module.exports = function(Topics) {
 		var uid = data.uid,
 			title = data.title,
 			content = data.content,
-			cid = data.cid;
+			cid = data.cid,
+			tags = data.tags;
 
 		if (title) {
 			title = title.trim();
@@ -132,7 +134,7 @@ module.exports = function(Topics) {
 			},
 			function(filteredData, next) {
 				content = filteredData.content || data.content;
-				Topics.create({uid: uid, title: title, cid: cid, thumb: data.thumb, tags: data.tags}, next);
+				Topics.create({uid: uid, title: title, cid: cid, thumb: data.thumb, tags: tags}, next);
 			},
 			function(tid, next) {
 				Topics.reply({uid:uid, tid:tid, handle: data.handle, content:content, req: data.req}, next);
@@ -251,7 +253,7 @@ module.exports = function(Topics) {
 						posts.getPidIndex(postData.pid, uid, next);
 					},
 					content: function(next) {
-						postTools.parsePost(postData, uid, next);
+						postTools.parsePost(postData, next);
 					}
 				}, next);
 			},

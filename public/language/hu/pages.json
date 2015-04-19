@@ -5,7 +5,8 @@
     "recent": "Friss Topikok",
     "users": "Regisztrált Felhasználók",
     "notifications": "Értesítések",
-    "tags": "Témák feliratú alatt \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Szerkesztés \"%1\"",
     "user.following": "Tagok akiket %1 követ",
     "user.followers": "Tagok akik követik %1 -t",
@@ -14,6 +15,7 @@
     "user.groups": "%1's csoport",
     "user.favourites": "%1 Kedvenc Hozzászólásai",
     "user.settings": "Felhasználói Beállítások",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 jelenleg karbantartás alatt van. Kérlek nézz vissza késöbb!",
     "maintenance.messageIntro": "Ezenkívúl, az adminisztrátor ezt az üzenetet hagyta:"
 }

@@ -5,7 +5,8 @@
     "recent": "সাম্প্রতিক টপিক",
     "users": "নিবন্ধিত সদস্যগণ",
     "notifications": "বিজ্ঞপ্তি",
-    "tags": "\"%1\" এ ট্যগকৃত টপিকসমূহ",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "সম্পাদনা \"%1\"",
     "user.following": "%1 যাদের অনুসরণ করেন",
     "user.followers": "যারা %1 কে অনুসরণ করেন",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "%1'র প্রিয় পোস্টগুলো",
     "user.settings": "সদস্য সেটিংস",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 is currently undergoing maintenance. Please come back another time.",
     "maintenance.messageIntro": "Additionally, the administrator has left this message:"
 }

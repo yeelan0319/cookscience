@@ -6,6 +6,7 @@ var async = require('async'),
 
 	user = require('../user'),
 	categories = require('../categories'),
+	privileges = require('../privileges'),
 	posts = require('../posts'),
 	topics = require('../topics'),
 	meta = require('../meta'),
@@ -126,33 +127,53 @@ function getGlobalField(field, callback) {
 	});
 }
 
-adminController.categories.active = function(req, res, next) {
-	filterAndRenderCategories(req, res, next, true);
-};
-
-adminController.categories.disabled = function(req, res, next) {
-	filterAndRenderCategories(req, res, next, false);
-};
-
-function filterAndRenderCategories(req, res, next, active) {
-	var uid = req.user ? parseInt(req.user.uid, 10) : 0;
-	categories.getAllCategories(uid, function (err, categoryData) {
+adminController.categories.get = function(req, res, next) {
+	async.parallel({
+		category: async.apply(categories.getCategories, [req.params.category_id], req.user.uid),
+		privileges: async.apply(privileges.categories.list, req.params.category_id)
+	}, function(err, data) {
 		if (err) {
 			return next(err);
 		}
-
-		categoryData = categoryData.filter(function (category) {
-			if (!category) {
-				return false;
+        
+		plugins.fireHook('filter:admin.category.get', {req: req, res: res, category: data.category[0], privileges: data.privileges}, function(err, data) {
+			if (err) {
+				return next(err);
 			}
-			return active ? !category.disabled : category.disabled;
-		});
-
-		res.render('admin/manage/categories', {
-			categories: categoryData
+			
+			res.render('admin/manage/category', {
+				category: data.category,
+				privileges: data.privileges
+			});
 		});
 	});
-}
+};
+
+adminController.categories.getAll = function(req, res, next) {
+	var	active = [],
+		disabled = [];
+
+	categories.getAllCategories(req.uid, function (err, categoryData) {
+		if (err) {
+			return next(err);
+		}
+        
+		plugins.fireHook('filter:admin.categories.get', {req: req, res: res, categories: categoryData}, function(err, data) {
+			if (err) {
+				return next(err);
+			}
+	
+			data.categories.filter(Boolean).forEach(function(category) {
+				(category.disabled ? disabled : active).push(category);
+			});
+	
+			res.render('admin/manage/categories', {
+				active: active,
+				disabled: disabled
+			});
+		});
+	});
+};
 
 adminController.tags.get = function(req, res, next) {
 	topics.getTags(0, 199, function(err, tags) {
@@ -169,20 +190,20 @@ adminController.flags.get = function(req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		res.render('admin/manage/flags', {posts: posts, next: end + 1, byUsername: byUsername});
+		res.render('admin/manage/flags', {posts: posts, next: stop + 1, byUsername: byUsername});
 	}
-	var uid = req.user ? parseInt(req.user.uid, 10) : 0;
+
 	var sortBy = req.query.sortBy || 'count';
 	var byUsername = req.query.byUsername || '';
 	var start = 0;
-	var end = 19;
+	var stop = 19;
 
 	if (byUsername) {
-		posts.getUserFlags(byUsername, sortBy, uid, start, end, done);
+		posts.getUserFlags(byUsername, sortBy, req.uid, start, stop, done);
 	} else {
 		var set = sortBy === 'count' ? 'posts:flags:count' : 'posts:flagged';
-		posts.getFlags(set, uid, start, end, done);	
-	}	
+		posts.getFlags(set, req.uid, start, stop, done);
+	}
 };
 
 adminController.database.get = function(req, res, next) {
@@ -251,7 +272,7 @@ adminController.navigation.get = function(req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		
+
 		res.render('admin/general/navigation', data);
 	});
 };
@@ -364,7 +385,7 @@ adminController.extend.rewards = function(req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		
+
 		res.render('admin/extend/rewards', data);
 	});
 };

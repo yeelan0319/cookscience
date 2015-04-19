@@ -14,7 +14,7 @@ var app,
 	plugins = require('./../plugins'),
 	navigation = require('./../navigation'),
 	meta = require('./../meta'),
-	translator = require('./../../public/src/translator'),
+	translator = require('./../../public/src/modules/translator'),
 	user = require('./../user'),
 	groups = require('./../groups'),
 	db = require('./../database'),
@@ -32,6 +32,12 @@ var app,
 middleware.authenticate = function(req, res, next) {
 	if (req.user) {
 		return next();
+	} else if (plugins.hasListeners('action:middleware.authenticate')) {
+		return plugins.fireHook('action:middleware.authenticate', {
+			req: req,
+			res: res,
+			next: next
+		});
 	}
 
 	controllers.helpers.notAllowed(req, res);
@@ -124,31 +130,31 @@ middleware.checkGlobalPrivacySettings = function(req, res, next) {
 
 middleware.checkAccountPermissions = function(req, res, next) {
 	// This middleware ensures that only the requested user and admins can pass
-	var callerUID = req.user ? parseInt(req.user.uid, 10) : 0;
-
-	if (callerUID === 0) {
-		return controllers.helpers.notAllowed(req, res);
-	}
-
-	user.getUidByUserslug(req.params.userslug, function (err, uid) {
+	middleware.authenticate(req, res, function(err) {
 		if (err) {
 			return next(err);
 		}
 
-		if (!uid) {
-			return controllers.helpers.notFound(req, res);
-		}
-
-		if (parseInt(uid, 10) === callerUID) {
-			return next();
-		}
-
-		user.isAdministrator(callerUID, function(err, isAdmin) {
-			if (err || isAdmin) {
+		user.getUidByUserslug(req.params.userslug, function (err, uid) {
+			if (err) {
 				return next(err);
 			}
 
-			controllers.helpers.notAllowed(req, res);
+			if (!uid) {
+				return controllers.helpers.notFound(req, res);
+			}
+
+			if (parseInt(uid, 10) === req.uid) {
+				return next();
+			}
+
+			user.isAdministrator(req.uid, function(err, isAdmin) {
+				if (err || isAdmin) {
+					return next(err);
+				}
+
+				controllers.helpers.notAllowed(req, res);
+			});
 		});
 	});
 };
@@ -201,8 +207,6 @@ middleware.buildHeader = function(req, res, next) {
 };
 
 middleware.renderHeader = function(req, res, callback) {
-	var uid = req.user ? parseInt(req.user.uid, 10) : 0;
-
 	navigation.get(function(err, menuItems) {
 		if (err) {
 			return callback(err);
@@ -284,8 +288,8 @@ middleware.renderHeader = function(req, res, callback) {
 				next(null, templateValues.useCustomJS ? meta.config.customJS : '');
 			},
 			title: function(next) {
-				if (uid) {
-					user.getSettings(uid, function(err, settings) {
+				if (req.uid) {
+					user.getSettings(req.uid, function(err, settings) {
 						if (err) {
 							return next(err);
 						}
@@ -296,11 +300,11 @@ middleware.renderHeader = function(req, res, callback) {
 				}
 			},
 			isAdmin: function(next) {
-				user.isAdministrator(uid, next);
+				user.isAdministrator(req.uid, next);
 			},
 			user: function(next) {
-				if (uid) {
-					user.getUserFields(uid, ['username', 'userslug', 'email', 'picture', 'status', 'email:confirmed', 'banned'], next);
+				if (req.uid) {
+					user.getUserFields(req.uid, ['username', 'userslug', 'email', 'picture', 'status', 'email:confirmed', 'banned'], next);
 				} else {
 					next(null, {
 						username: '[[global:guest]]',
@@ -378,6 +382,11 @@ middleware.processRender = function(req, res, next) {
 		}
 
 		render.call(self, template, options, function(err, str) {
+			if (err) {
+				winston.error(err);
+				return fn(err);
+			}
+
 			// str = str + '<input type="hidden" ajaxify-data="' + encodeURIComponent(JSON.stringify(options)) + '" />';
 			str = (res.locals.postHeader ? res.locals.postHeader : '') + str + (res.locals.preFooter ? res.locals.preFooter : '');
 
@@ -495,7 +504,7 @@ middleware.maintenanceMode = function(req, res, next) {
 };
 
 middleware.publicTagListing = function(req, res, next) {
-	if (req.user || (!meta.config.hasOwnProperty('publicTagListing') || parseInt(meta.config.publicTagListing, 10) === 1)) {
+	if (req.user || parseInt(meta.config.publicTagListing, 10) === 1) {
 		next();
 	} else {
 		controllers.helpers.notAllowed(req, res);
@@ -511,6 +520,21 @@ middleware.exposeGroupName = function(req, res, next) {
 		res.locals.groupName = groupName;
 		next();
 	});
+};
+
+middleware.exposeUid = function(req, res, next) {
+	if (req.params.hasOwnProperty('userslug')) {
+		user.getUidByUserslug(req.params.userslug, function(err, uid) {
+			if (err) {
+				return next(err);
+			}
+
+			res.locals.uid = uid;
+			next();
+		});
+	} else {
+		next();
+	}
 };
 
 module.exports = function(webserver) {

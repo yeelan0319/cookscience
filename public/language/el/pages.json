@@ -5,7 +5,8 @@
     "recent": "Πρόσφατα Θέματα",
     "users": "Εγγεγραμμένοι Χρήστες",
     "notifications": "Ειδοποιήσεις",
-    "tags": "Θέματα με ετικέτα \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Επεξεργασία του \"%1\"",
     "user.following": "Άτομα που ακολουθεί ο/η %1",
     "user.followers": "Άτομα που ακολουθούν τον/την %1",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "Οι αγαπημένες δημοσιεύσεις του/της %1",
     "user.settings": "Επιλογές Χρήστη",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "Το %1 αυτή την στιγμή συντηρείται. Παρακαλώ έλα αργότερα.",
     "maintenance.messageIntro": "Additionally, the administrator has left this message:"
 }

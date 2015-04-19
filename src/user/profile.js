@@ -15,122 +15,122 @@ var async = require('async'),
 module.exports = function(User) {
 
 	User.updateProfile = function(uid, data, callback) {
+		var fields = ['username', 'email', 'fullname', 'website', 'location', 'birthday', 'signature'];
 
-		plugins.fireHook('filter:user.updateProfile', {uid: uid, settings: data}, function(err, data) {
-			if(err) {
+		plugins.fireHook('filter:user.updateProfile', {uid: uid, data: data, fields: fields}, function(err, data) {
+			if (err) {
 				return callback(err);
 			}
 
-			data = data.settings;
-			var fields = ['username', 'email', 'fullname', 'website', 'location', 'birthday', 'signature'];
-			plugins.fireHook('filter:user.customProfile', fields, function(err, fields){
+			fields = data.fields;
+			data = data.data;
+
+			function isSignatureValid(next) {
+				if (data.signature !== undefined && data.signature.length > meta.config.maximumSignatureLength) {
+					next(new Error('[[error:signature-too-long, ' + meta.config.maximumSignatureLength + ']]'));
+				} else {
+					next();
+				}
+			}
+
+			function isEmailAvailable(next) {
+				if (!data.email) {
+					return next();
+				}
+
+				if (!utils.isEmailValid(data.email)) {
+					return next(new Error('[[error:invalid-email]]'));
 				
-				function isSignatureValid(next) {
-					if (data.signature !== undefined && data.signature.length > meta.config.maximumSignatureLength) {
-						next(new Error('[[error:signature-too-long, ' + meta.config.maximumSignatureLength + ']]'));
-					} else {
-						next();
-					}
 				}
 
-				function isEmailAvailable(next) {
-					if (!data.email) {
+				User.getUserField(uid, 'email', function(err, email) {
+					if(email === data.email) {
 						return next();
 					}
 
-					if (!utils.isEmailValid(data.email)) {
-						return next(new Error('[[error:invalid-email]]'));
-					}
-
-					User.getUserField(uid, 'email', function(err, email) {
-						if(email === data.email) {
-							return next();
+					User.email.available(data.email, function(err, available) {
+						if (err) {
+							return next(err);
 						}
 
-						User.email.available(data.email, function(err, available) {
-							if (err) {
-								return next(err);
-							}
-
-							next(!available ? new Error('[[error:email-taken]]') : null);
-						});
+						next(!available ? new Error('[[error:email-taken]]') : null);
 					});
-				}
+				});
+			}
 
-				function isUsernameAvailable(next) {
-					if (!data.username) {
+			function isUsernameAvailable(next) {
+				if (!data.username) {
+					return next();
+				}
+				User.getUserFields(uid, ['username', 'userslug'], function(err, userData) {
+
+					var userslug = utils.slugify(data.username);
+
+					if(userslug === userData.userslug) {
 						return next();
 					}
-					User.getUserFields(uid, ['username', 'userslug'], function(err, userData) {
 
-						var userslug = utils.slugify(data.username);
+					if (data.username.length < meta.config.minimumUsernameLength) {
+						return next(new Error('[[error:username-too-short]]'));
+					}
 
-						if(userslug === userData.userslug) {
-							return next();
+					if (data.username.length > meta.config.maximumUsernameLength) {
+						return next(new Error('[[error:username-too-long]]'));
+					}
+
+					if(!utils.isUserNameValid(data.username) || !userslug) {
+						return next(new Error('[[error:invalid-username]]'));
+					}
+
+					User.exists(userslug, function(err, exists) {
+						if(err) {
+							return next(err);
 						}
 
-						if (data.username.length < meta.config.minimumUsernameLength) {
-							return next(new Error('[[error:username-too-short]]'));
-						}
-
-						if (data.username.length > meta.config.maximumUsernameLength) {
-							return next(new Error('[[error:username-too-long]]'));
-						}
-
-						if(!utils.isUserNameValid(data.username) || !userslug) {
-							return next(new Error('[[error:invalid-username]]'));
-						}
-
-						User.exists(userslug, function(err, exists) {
-							if(err) {
-								return next(err);
-							}
-
-							next(exists ? new Error('[[error:username-taken]]') : null);
-						});
+						next(exists ? new Error('[[error:username-taken]]') : null);
 					});
+				});
+			}
+
+			async.series([isSignatureValid, isEmailAvailable, isUsernameAvailable], function(err, results) {
+				if (err) {
+					return callback(err);
 				}
 
-				async.series([isSignatureValid, isEmailAvailable, isUsernameAvailable], function(err, results) {
+				async.each(fields, updateField, function(err) {
 					if (err) {
 						return callback(err);
 					}
-
-					async.each(fields, updateField, function(err) {
-						if (err) {
-							return callback(err);
-						}
-						plugins.fireHook('action:user.updateProfile', {data: data, uid: uid});
-						User.getUserFields(uid, ['email', 'username', 'userslug', 'picture', 'gravatarpicture'], callback);
-					});
+					plugins.fireHook('action:user.updateProfile', {data: data, uid: uid});
+					User.getUserFields(uid, ['email', 'username', 'userslug', 'picture', 'gravatarpicture'], callback);
 				});
+			});
 
-				function updateField(field, next) {
-					if (!(data[field] !== undefined && typeof data[field] === 'string')) {
-						return next();
-					}
-
-					data[field] = data[field].trim();
-					data[field] = validator.escape(data[field]);
-
-					if (field === 'email') {
-						return updateEmail(uid, data.email, next);
-					} else if (field === 'username') {
-						return updateUsername(uid, data.username, next);
-					} else if (field === 'fullname') {
-						return updateFullname(uid, data.fullname, next);
-					} else if (field === 'signature') {
-						data[field] = S(data[field]).stripTags().s;
-					} else if (field === 'website') {
-						if (!data[field].startsWith(validator.escape('http://')) && !data[field].startsWith(validator.escape('https://'))) {
-							data[field] = validator.escape('http://') + data[field];
-						}
-					}
-
-					User.setUserField(uid, field, data[field], next);
+			function updateField(field, next) {
+				if (!(data[field] !== undefined && typeof data[field] === 'string')) {
+					return next();
 				}
-			});	
-		});
+
+				data[field] = data[field].trim();
+				data[field] = validator.escape(data[field]);
+
+				if (field === 'email') {
+					return updateEmail(uid, data.email, next);
+				} else if (field === 'username') {
+					return updateUsername(uid, data.username, next);
+				} else if (field === 'fullname') {
+					return updateFullname(uid, data.fullname, next);
+				} else if (field === 'signature') {
+					data[field] = S(data[field]).stripTags().s;
+				} else if (field === 'website') {
+					if (!data[field].startsWith(validator.escape('http://')) && !data[field].startsWith(validator.escape('https://'))) {
+						data[field] = validator.escape('http://') + data[field];
+					}
+				}
+
+				User.setUserField(uid, field, data[field], next);
+			}
+		});	
 	};
 
 	function updateEmail(uid, newEmail, callback) {
@@ -258,7 +258,10 @@ module.exports = function(User) {
 					return callback(err);
 				}
 
-				User.setUserField(data.uid, 'password', hash, callback);
+				async.parallel([
+					async.apply(User.setUserField, data.uid, 'password', hash),
+					async.apply(User.reset.updateExpiry, data.uid)
+				], callback);
 			});
 		}
 

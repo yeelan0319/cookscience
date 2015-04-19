@@ -5,7 +5,8 @@
     "recent": "Najnovšie príspevky",
     "users": "Prihlásení uživatelia",
     "notifications": "Notifikácie",
-    "tags": "Topics tagged under \"%1\"",
+    "tags": "Tags",
+    "tag": "Topics tagged under \"%1\"",
     "user.edit": "Uprav \"%1\"",
     "user.following": "Užívatelia  %1 následujú",
     "user.followers": "Užívatelia následujúci %1",
@@ -14,6 +15,7 @@
     "user.groups": "%1's Groups",
     "user.favourites": "%1's obľubených príspevkov",
     "user.settings": "Užívatelské nadstavenie",
+    "user.watched": "Topics watched by %1",
     "maintenance.text": "%1 is currently undergoing maintenance. Please come back another time.",
     "maintenance.messageIntro": "Additionally, the administrator has left this message:"
 }

@@ -4,11 +4,19 @@ var ajaxify = ajaxify || {};
 
 $(document).ready(function() {
 
-	/*global app, templates, utils, socket, translator, config, RELATIVE_PATH*/
+	/*global app, templates, utils, socket, config, RELATIVE_PATH*/
 
 	var location = document.location || window.location,
 		rootUrl = location.protocol + '//' + (location.hostname || location.host) + (location.port ? ':' + location.port : ''),
-		apiXHR = null;
+		apiXHR = null,
+
+		translator;
+
+	// Dumb hack to fool ajaxify into thinking translator is still a global
+	// When ajaxify is migrated to a require.js module, then this can be merged into the "define" call
+	require(['translator'], function(_translator) {
+		translator = _translator;
+	});
 
 	$(window).on('popstate', function (ev) {
 		ev = ev.originalEvent;
@@ -23,9 +31,7 @@ $(document).ready(function() {
 	ajaxify.currentPage = null;
 
 	ajaxify.go = function (url, callback, quiet) {
-		if (ajaxify.handleACPRedirect(url)) {
-			return true;
-		} else if (ajaxify.handleNonAPIRoutes(url)) {
+		if (ajaxify.handleACPRedirect(url) || ajaxify.handleNonAPIRoutes(url)) {
 			return true;
 		}
 
@@ -49,11 +55,9 @@ $(document).ready(function() {
 
 			app.template = data.template.name;
 
-			translator.load(config.defaultLang, data.template.name);
-
-			renderTemplate(url, data.template.name, data, callback);
-
-			require(['search'], function(search) {
+			require(['translator', 'search'], function(translator, search) {
+				translator.load(config.defaultLang, data.template.name);
+				renderTemplate(url, data.template.name, data, callback);
 				search.topicDOM.end();
 			});
 		});
@@ -64,7 +68,7 @@ $(document).ready(function() {
 	ajaxify.handleACPRedirect = function(url) {
 		// If ajaxifying into an admin route from regular site, do a cold load.
 		url = ajaxify.removeRelativePath(url.replace(/\/$/, ''));
-		if (url.indexOf('admin') === 0 && window.location.pathname.indexOf(RELATIVE_PATH + '/admin') !== 0) {
+		if (url.startsWith('admin') && window.location.pathname.indexOf(RELATIVE_PATH + '/admin') !== 0) {
 			window.open(RELATIVE_PATH + '/' + url, '_blank');
 			return true;
 		}
@@ -73,7 +77,7 @@ $(document).ready(function() {
 
 	ajaxify.handleNonAPIRoutes = function(url) {
 		url = ajaxify.removeRelativePath(url.replace(/\/$/, ''));
-		if (url.indexOf('uploads') === 0) {
+		if (url.startsWith('uploads')) {
 			window.open(RELATIVE_PATH + '/' + url, '_blank');
 			return true;
 		}
@@ -162,13 +166,17 @@ $(document).ready(function() {
 	};
 
 	ajaxify.removeRelativePath = function(url) {
-		if (url.indexOf(RELATIVE_PATH.slice(1)) === 0) {
+		if (url.startsWith(RELATIVE_PATH.slice(1))) {
 			url = url.slice(RELATIVE_PATH.length);
 		}
 		return url;
 	};
 
-	ajaxify.refresh = function() {
+	ajaxify.refresh = function(e) {
+		if (e && e instanceof jQuery.Event) {
+			e.preventDefault();
+		}
+
 		ajaxify.go(ajaxify.currentPage);
 	};
 

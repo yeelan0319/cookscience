@@ -1,9 +1,10 @@
 'use strict';
 
-/* globals define, socket, app, config, ajaxify, utils, translator, templates, bootbox */
+/* globals define, socket, app, config, ajaxify, utils, templates, bootbox */
 
 define('composer', [
 	'taskbar',
+	'translator',
 	'composer/controls',
 	'composer/uploads',
 	'composer/formatting',
@@ -12,7 +13,7 @@ define('composer', [
 	'composer/categoryList',
 	'composer/preview',
 	'composer/resize'
-], function(taskbar, controls, uploads, formatting, drafts, tags, categoryList, preview, resize) {
+], function(taskbar, translator, controls, uploads, formatting, drafts, tags, categoryList, preview, resize) {
 	var composer = {
 		active: undefined,
 		posts: {},
@@ -36,7 +37,7 @@ define('composer', [
 					if (confirm) {
 						discard(composer.active);
 					} else {
-						history.pushState({}, '',  '#compose');
+						history.pushState({}, '');
 					}
 				});
 			});
@@ -47,7 +48,15 @@ define('composer', [
 		localStorage.removeItem('category:' + data.data.cid + ':bookmark');
 		localStorage.removeItem('category:' + data.data.cid + ':bookmark:clicked');
 		ajaxify.go('topic/' + data.data.slug);
+		removeComposerHistory();
 	});
+
+	function removeComposerHistory() {
+		var env = utils.findBootstrapEnvironment();
+		if (env === 'xs' || env ==='sm') {
+			history.back();
+		}
+	}
 
 	// Query server for formatting options
 	socket.emit('modules.composer.getFormattingOptions', function(err, options) {
@@ -117,12 +126,12 @@ define('composer', [
 
 		var env = utils.findBootstrapEnvironment();
 		if (env === 'xs' || env ==='sm') {
-			history.pushState({}, '',  '#compose');
+			history.pushState({}, '');
 		}
 	}
 
-	function composerAlert(message) {
-		$('[data-action="post"]').removeAttr('disabled');
+	function composerAlert(post_uuid, message) {
+		$('#cmp-uuid-' + post_uuid).find('.composer-submit').removeAttr('disabled');
 		app.alert({
 			type: 'danger',
 			timeout: 3000,
@@ -301,9 +310,11 @@ define('composer', [
 			$('body').append(composerTemplate);
 
 			var postContainer = $(composerTemplate[0]),
+				submitBtn = postContainer.find('.composer-submit'),
 				//bodyEl = postContainer.find('textarea'),
 				draft = drafts.getDraft(postData.save_id);
 
+			preview.handleToggler(postContainer);
 			tags.init(postContainer, composer.posts[post_uuid]);
 			categoryList.init(postContainer, composer.posts[post_uuid]);
 
@@ -326,18 +337,33 @@ define('composer', [
 				composer.posts[post_uuid].modified = true;
 			});
 
-			postContainer.on('click', '[data-action="post"]', function() {
-				$(this).attr('disabled', true);
-				post(post_uuid);
+			submitBtn.on('click', function() {
+				var action = $(this).attr('data-action');
+
+				switch(action) {
+					case 'post-lock':
+						$(this).attr('disabled', true);
+						post(post_uuid, {lock: true});
+						break;
+
+					case 'post':	// intentional fall-through
+					default:
+						$(this).attr('disabled', true);
+						post(post_uuid);
+						break;
+				}
 			});
 
-			postContainer.on('click', '[data-action="post-lock"]', function() {
-				$(this).attr('disabled', true);
-				post(post_uuid, {lock: true});
+			postContainer.on('click', 'a[data-switch-action]', function() {
+				var action = $(this).attr('data-switch-action'),
+					label = $(this).html();
+
+				submitBtn.attr('data-action', action).html(label);
 			});
 
-			postContainer.on('click', '[data-action="discard"]', function() {
+			postContainer.find('.composer-discard').on('click', function() {
 				if (!composer.posts[post_uuid].modified) {
+					removeComposerHistory();
 					discard(post_uuid);
 					return;
 				}
@@ -345,6 +371,7 @@ define('composer', [
 				translator.translate('[[modules:composer.discard]]', function(translated) {
 					bootbox.confirm(translated, function(confirm) {
 						if (confirm) {
+							removeComposerHistory();
 							discard(post_uuid);
 						}
 						btn.prop('disabled', false);
@@ -377,12 +404,12 @@ define('composer', [
 			preview.render(postContainer, function() {
 				preview.matchScroll(postContainer);
 			});
+
 			drafts.init(postContainer, postData);
 
 			resize.handleResize(postContainer);
 
 			handleHelp(postContainer);
-			handleTogglePreview(postContainer);
 
 			$(window).trigger('action:composer.loaded', {
 				post_uuid: post_uuid
@@ -410,27 +437,6 @@ define('composer', [
 					bootbox.alert(html);
 				});
 			}
-		});
-	}
-
-	function handleTogglePreview(postContainer) {
-		var showBtn = postContainer.find('.write-container .toggle-preview'),
-			hideBtn = postContainer.find('.preview-container .toggle-preview');
-
-		hideBtn.on('click', function() {
-			$('.preview-container').addClass('hide');
-			$('.write-container').addClass('maximized');
-			showBtn.removeClass('hide');
-
-			$('.write').focus();
-		});
-
-		showBtn.on('click', function() {
-			$('.preview-container').removeClass('hide');
-			$('.write-container').removeClass('maximized');
-			showBtn.addClass('hide');
-
-			$('.write').focus();
 		});
 	}
 
@@ -509,11 +515,11 @@ define('composer', [
 		var checkTitle = parseInt(postData.cid, 10) || parseInt(postData.pid, 10);
 
 		if (uploads.inProgress[post_uuid] && uploads.inProgress[post_uuid].length) {
-			return composerAlert('[[error:still-uploading]]');
+			return composerAlert(post_uuid, '[[error:still-uploading]]');
 		} else if (checkTitle && titleEl.val().length < parseInt(config.minimumTitleLength, 10)) {
-			return composerAlert('[[error:title-too-short, ' + config.minimumTitleLength + ']]');
+			return composerAlert(post_uuid, '[[error:title-too-short, ' + config.minimumTitleLength + ']]');
 		} else if (checkTitle && titleEl.val().length > parseInt(config.maximumTitleLength, 10)) {
-			return composerAlert('[[error:title-too-long, ' + config.maximumTitleLength + ']]');
+			return composerAlert(post_uuid, '[[error:title-too-long, ' + config.maximumTitleLength + ']]');
 		} else if (checkTitle && !utils.slugify(titleEl.val()).length) {
 			return composerAlert('[[error:invalid-title]]');
 		// } else if (bodyEl.val().length < parseInt(config.minimumPostLength, 10)) {
@@ -571,7 +577,7 @@ define('composer', [
 		}
 
 		socket.emit(action, composerData, function (err, data) {
-			$('[data-action="post"]').removeAttr('disabled');
+			postContainer.find('.composer-submit').removeAttr('disabled');
 			if (err) {
 				if (err.message === '[[error:email-not-confirmed]]') {
 					return app.showEmailConfirmWarning(err);
@@ -606,6 +612,7 @@ define('composer', [
 
 
 			$('html').removeClass('composing mobile');
+
 		}
 	}
 
