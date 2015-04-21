@@ -1,6 +1,5 @@
 npm-debug.log
 node_modules/*
-!node_modules/nodebb-plugin-cookscience-modules
 sftp-config.json
 config.json
 public/src/nodebb.min.js
@@ -34,3 +33,4 @@ pidfile
 /public/nodebb.min.js
 /public/nodebb.min.js.map
 dbdump
+node_modules-mac

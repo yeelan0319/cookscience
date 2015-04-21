@@ -1,0 +1,12 @@
+mongo:
+  build: ../cookscience-mongo/
+  command: mongod --smallfiles
+web:
+  build: .
+  command: node app.js
+  ports: 
+    - "4567:4567"
+  volumes:
+    - ./:/usr/src/cookscience/
+  links:
+    - mongo

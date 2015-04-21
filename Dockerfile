@@ -14,5 +14,3 @@ WORKDIR /usr/src/cookscience
 # Expose ports
 EXPOSE 4567
 
-# Prepare node modules
-RUN npm install
