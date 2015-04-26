@@ -17,7 +17,7 @@
     "invalid-pagination-value": "无效页码",
     "username-taken": "用户名已被占用",
     "email-taken": "电子邮箱已被占用",
-    "email-not-confirmed": "您的电子邮箱尚未确认，请点击这里确认您的电子邮箱。",
+    "email-not-confirmed": "您的电子邮箱尚未确认，如果您没有收到确认邮件请点击此处重新发送。",
     "email-not-confirmed-chat": "您的电子邮箱尚未确认，无法聊天，请点击这里确认您的电子邮箱。",
     "no-email-to-confirm": "本论坛需要电子邮箱确认，请点击这里输入一个电子邮箱地址",
     "email-confirm-failed": "我们无法确认您的电子邮箱，请重试",
