@@ -14,6 +14,7 @@ var fs = require('fs'),
 	posts = require('../posts'),
 	topics = require('../topics'),
 	groups = require('../groups'),
+	categories = require('../categories'),
 	messaging = require('../messaging'),
 	postTools = require('../postTools'),
 	utils = require('../../public/src/utils'),
@@ -22,7 +23,8 @@ var fs = require('fs'),
 	languages = require('../languages'),
 	image = require('../image'),
 	file = require('../file'),
-	helpers = require('./helpers');
+	helpers = require('./helpers'),
+	_ = require('underscore');
 
 function getUserDataByUserSlug(userslug, callerUID, callback) {
 	user.getUidByUserslug(userslug, function(err, uid) {
@@ -311,23 +313,40 @@ accountsController.getBaseUser = function(userslug, callerUID, callback) {
 };
 
 accountsController.accountEdit = function(req, res, next) {
-	var userData;
-	async.waterfall([
-		function(next) {
-			getUserDataByUserSlug(req.params.userslug, req.uid, next);
+	async.parallel({
+		categories: function(callback){
+			categories.getAllCategories(req.uid, callback);
 		},
-		function(data, next) {
-			userData = data;
-			db.getObjectField('user:' + userData.uid, 'password', next);
-		}
-	], function(err, password) {
-		if (err) {
-			return next(err);
-		}
+		userData: function(callback){
+			var userData;
+			async.waterfall([
+				function(next) {
+					getUserDataByUserSlug(req.params.userslug, req.uid, next);
+				},
+				function(data, next) {
+					userData = data;
+					db.getObjectField('user:' + userData.uid, 'password', next);
+				}
+			], function(err, password) {
+				if (err) {
+					return next(err);
+				}
 
-		userData.hasPassword = !!password;
-
-		res.render('account/edit', userData);
+				userData.hasPassword = !!password;
+				callback(null, userData);
+			});
+		}
+	},
+	function(err, results){
+		results.categories.forEach(function(category){
+			if(results.userData.discipline.indexOf(category.cid) !== -1){
+				category.checked = true;
+			}
+			else{
+				category.checked = false;
+			}
+		});
+		res.render('account/edit', results);
 	});
 };
 
