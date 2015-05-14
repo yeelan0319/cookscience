@@ -107,13 +107,13 @@ module.exports = function(User) {
 			});
 
 			function updateField(field, next) {
-				if (!(data[field] !== undefined && typeof data[field] === 'string')) {
+				if (data[field] === undefined || (typeof data[field] !== 'string' && Object.prototype.toString.call(data[field]) !== "[object Array]")) {
 					return next();
 				}
-
-				data[field] = data[field].trim();
-				data[field] = validator.escape(data[field]);
-
+				if(typeof data[field] === 'string' ){
+					data[field] = data[field].trim();
+					data[field] = validator.escape(data[field]);
+				}
 				if (field === 'email') {
 					return updateEmail(uid, data.email, next);
 				} else if (field === 'username') {

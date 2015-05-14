@@ -339,7 +339,7 @@ accountsController.accountEdit = function(req, res, next) {
 	},
 	function(err, results){
 		results.categories.forEach(function(category){
-			if(results.userData.discipline.indexOf(category.cid) !== -1){
+			if(results.userData.discipline && results.userData.discipline.indexOf(category.cid.toString()) !== -1){
 				category.checked = true;
 			}
 			else{

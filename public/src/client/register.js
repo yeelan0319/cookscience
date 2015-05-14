@@ -13,6 +13,9 @@ define('forum/register', ['csrf', 'translator'], function(csrf, translator) {
 			username = $('#username'),
 			password = $('#password'),
 			password_confirm = $('#password-confirm'),
+			fullname = $('#fullname'),
+			institution = $('#institution'),
+			lab = $('#lab'),
 			register = $('#register'),
 			agreeTerms = $('#agree-terms');
 
@@ -45,12 +48,30 @@ define('forum/register', ['csrf', 'translator'], function(csrf, translator) {
 				validatePasswordConfirm(password.val(), password_confirm.val());
 			}
 		});
+		fullname.on('blur', function(){
+			if(fullname.val().length){
+				validateFullname(fullname.val());
+			}
+		});
+		institution.on('blur', function(){
+			if(institution.val().length){
+				validateInstitution(institution.val());
+			}
+		});
+		lab.on('blur', function(){
+			if(lab.val().length){
+				validateLab(lab.val());
+			}
+		});
 
 		function validateForm(callback) {
 			validationError = false;
 			validatePassword(password.val(), password_confirm.val());
 			validatePasswordConfirm(password.val(), password_confirm.val());
-
+			validateFullname(fullname.val());
+			validateInstitution(institution.val());
+			validateLab(lab.val());
+			
 			validateEmail(email.val(), function() {
 				validateUsername(username.val(), callback);
 			});
@@ -182,6 +203,30 @@ define('forum/register', ['csrf', 'translator'], function(csrf, translator) {
 			showError(password_confirm_notify, '[[user:change_password_error_match]]');
 		} else {
 			showSuccess(password_confirm_notify, successIcon);
+		}
+	}
+	function validateFullname(fullname){
+		var fullname_notify = $('#fullname-notify');
+		if (!fullname) {
+			showError(fullname_notify, 'Please fill in full name');
+		} else {
+			showSuccess(fullname_notify, successIcon);
+		}
+	}
+	function validateInstitution(institution){
+		var institution_notify = $('#institution-notify');
+		if (!institution) {
+			showError(institution_notify, 'Please fill in your institution');
+		} else {
+			showSuccess(institution_notify, successIcon);
+		}
+	}
+	function validateLab(lab){
+		var lab_notify = $('#lab-notify');
+		if (!lab) {
+			showError(lab_notify, 'Please fill in your lab');
+		} else {
+			showSuccess(lab_notify, successIcon);
 		}
 	}
 
